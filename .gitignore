@@ -1,0 +1,25 @@
+# Environnements & IDE
+.vscode/
+__pycache__/
+*.pyc
+
+# Données
+data/
+outputs/
+*.csv
+
+# Résultats & figures
+*.png
+
+# Build
+build/
+
+# MLflow
+mlruns/
+mlflow.db
+
+# Fichiers parasites
+=*
+
+# Fichiers MLFlow
+chap6mlflow.egg-info

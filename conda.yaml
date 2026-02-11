@@ -1,0 +1,15 @@
+name: chap6mlflow
+channels:
+  - conda-forge
+dependencies:
+  - mlflow
+  - python=3.10
+  - pip
+  - lightgbm
+  - scikit-learn
+  - pandas
+  - numpy
+  - matplotlib
+  - seaborn
+  - mlflow
+

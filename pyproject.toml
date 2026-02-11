@@ -1,0 +1,8 @@
+[project]
+name = "chap_devops"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[tool.mlflow]
+experiment_name = "Chap8_Models_Comparison"
+
