@@ -2,9 +2,14 @@ from fastapi import FastAPI, HTTPException
 import mlflow
 import pandas as pd
 import numpy as np
+import os
 
 from api.schemas import PredictionInput, PredictionOutput
-from api.model_loader import model
+from api.model_loader import model, BEST_THRESHOLD
+
+# Chargement des variables de .env
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI(title="Credit Default API")
 
@@ -12,7 +17,6 @@ mlflow.set_tracking_uri(
     os.getenv("MLFLOW_TRACKING_URI", "http://host.docker.internal:5001")
 )
 
-BEST_THRESHOLD = 0.5  # idéalement charger depuis MLflow
 
 @app.get("/")
 def health():
@@ -20,9 +24,10 @@ def health():
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict(data: PredictionInput):
-
+    
     try:
-        df = pd.DataFrame([data.features])
+        df = pd.DataFrame([data.model_dump()])
+        
 
         proba = model.predict_proba(df)[:, 1][0]
         prediction = int(proba >= BEST_THRESHOLD)

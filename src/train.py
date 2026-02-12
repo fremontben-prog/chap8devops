@@ -4,7 +4,7 @@ os.environ["MPLBACKEND"] = "Agg"
 import matplotlib
 matplotlib.use("Agg")
 
-
+import sys
 import gc
 import mlflow
 import pandas as pd
@@ -115,7 +115,33 @@ def main(debug = True):
         df = df.join(cc, how="left", on="SK_ID_CURR")
         del cc
         gc.collect()
+        
+        
+    # Sélection de valeur true et false
+    df_selection_true = df[df['TARGET'] == 1].head(5)
+    df_selection_false = df[df['TARGET'] == 0].head(5)
+    
+    # Export en JSON pour récupérer des valeurs pour tester API
+    df_selection_true.to_json(
+        'donnees_test_true.json', 
+        orient='records', 
+        indent=3, 
+        force_ascii=False
+    )
 
+    print(f"Export (true) terminé : {len(df_selection_true)} lignes enregistrées.")
+    
+    df_selection_false.to_json(
+        'donnees_test_false.json', 
+        orient='records', 
+        indent=3, 
+        force_ascii=False
+    )
+    
+    print(f"Export (False) terminé : {len(df_selection_false)} lignes enregistrées.")
+        
+    sys.exit(0)
+    
     with timer("Run LogisticRegression"):
         lr_results = kfold_logistic_regression(
             df,
