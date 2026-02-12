@@ -140,7 +140,6 @@ def main(debug = True):
     
     print(f"Export (False) terminé : {len(df_selection_false)} lignes enregistrées.")
         
-    sys.exit(0)
     
     with timer("Run LogisticRegression"):
         lr_results = kfold_logistic_regression(
