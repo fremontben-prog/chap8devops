@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from api.model_loader import BEST_THRESHOLD
+from api.main import app
 import json
 import os
 
