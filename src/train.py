@@ -8,6 +8,8 @@ import sys
 import gc
 import mlflow
 import pandas as pd
+import joblib
+import json
 
 from lightgbm import LGBMClassifier
 from xgboost import XGBClassifier
@@ -275,6 +277,15 @@ def main(debug = True):
             sk_model=final_model,
             artifact_path="model"
         )
+        
+        # Sauvegarde pour être utilisé par la CI 
+        # Sauvegarde du modèle et threshold
+        joblib.dump(final_model, "final_model.pkl")
+
+        with open("best_threshold.json", "w") as f:
+            json.dump({"best_threshold": best_threshold}, f)
+
+        print("Model and threshold saved successfully.")
 
         # URI exact du modèle
         model_uri = f"runs:/{mlflow.active_run().info.run_id}/model"
