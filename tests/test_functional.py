@@ -1,20 +1,14 @@
 from fastapi.testclient import TestClient
-from api.model_loader import BEST_THRESHOLD
+from api.model_loader import get_model_and_threshold
 from api.main import app
 import json
 import os
 import logging
 
-# Charge les fichiers JSON depuis la racine
-file_path = os.path.join(os.path.dirname(__file__), "../donnees_test_true.json")
-with open(file_path, "r") as f:
-    test_data_true = json.load(f)
-    
-file_path = os.path.join(os.path.dirname(__file__), "../donnees_test_false.json")
-with open(file_path, "r") as f:
-    test_data_false = json.load(f)
 
 client = TestClient(app)
+
+_, BEST_THRESHOLD = get_model_and_threshold()
 
 # Tests pour des valeurs de clients à true
 def test_prediction_true():

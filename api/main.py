@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 from api.schemas import PredictionInput, PredictionOutput
-from api.model_loader import load_model_and_threshold
+from api.model_loader import get_model_and_threshold
 
 model, BEST_THRESHOLD = load_model_and_threshold()
 
@@ -26,7 +26,7 @@ def health():
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict(data: PredictionInput):
-    
+    model, BEST_THRESHOLD = get_model_and_threshold()
     try:
         df = pd.DataFrame([data.model_dump()])
         

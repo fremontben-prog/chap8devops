@@ -13,6 +13,14 @@ OUTPUT_DIR = Path("outputs")
 LOCAL_MODEL_FILE = OUTPUT_DIR / "model.pkl"
 LOCAL_THRESHOLD_FILE = OUTPUT_DIR / "best_threshold.json"
 
+model = None
+BEST_THRESHOLD = None
+
+def get_model_and_threshold():
+    global model, BEST_THRESHOLD
+    if model is None:
+        model, BEST_THRESHOLD = load_model_and_threshold()
+    return model, BEST_THRESHOLD
 
 class DummyModel:
     def predict_proba(self, X):
