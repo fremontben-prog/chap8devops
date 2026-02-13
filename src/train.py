@@ -11,6 +11,8 @@ import pandas as pd
 import joblib
 import json
 
+from pathlib import Path
+
 from lightgbm import LGBMClassifier
 from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -46,7 +48,6 @@ SUBMISSION_FILE_NAME = "submission_kernel02.csv"
 
 EXPERIMENT = "Chap8_Models_Comparison"
 
-from pathlib import Path
 
 OUTPUT_DIR = Path("outputs")
 OUTPUT_DIR.mkdir(exist_ok=True)
@@ -266,7 +267,7 @@ def main(debug = True):
                 index=feats
             ).sort_values(ascending=False)
 
-            fi_path = "final_feature_importance.csv"
+            fi_path = OUTPUT_DIR / "final_feature_importance.csv"
             fi.to_csv(fi_path)
 
             mlflow.log_artifact(fi_path)
@@ -280,9 +281,11 @@ def main(debug = True):
         
         # Sauvegarde pour être utilisé par la CI 
         # Sauvegarde du modèle et threshold
-        joblib.dump(final_model, "final_model.pkl")
+        fi_path = OUTPUT_DIR / "final_model.pkl"
+        joblib.dump(final_model, fi_path)
 
-        with open("best_threshold.json", "w") as f:
+        fi_path = OUTPUT_DIR / "best_threshold.json"
+        with open(fi_path, "w") as f:
             json.dump({"best_threshold": best_threshold}, f)
 
         print("Model and threshold saved successfully.")

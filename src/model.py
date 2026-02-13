@@ -28,6 +28,10 @@ import optuna
 
 EXPERIMENT = "Chap8_Models_Comparison"
 
+from pathlib import Path
+OUTPUT_DIR = Path("outputs")
+OUTPUT_DIR.mkdir(exist_ok=True)
+
 def optimize_lgbm_with_optuna(train_df, feats, folds, n_trials=30):
     def objective(trial):
         # Calcul du déséquilibre des classes via le paramètre scale_pos_weight de LightGBM comme le ratio entre classes majoritaire et minoritaire.
@@ -87,7 +91,8 @@ def plot_cost_threshold(thresholds, costs, output_path="cost_vs_threshold.png"):
     plt.grid(True)
 
     plt.tight_layout()
-    plt.savefig(output_path)
+    fi_path = OUTPUT_DIR / output_path
+    plt.savefig(fi_path)
     plt.close()
 
     return output_path

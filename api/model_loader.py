@@ -4,10 +4,14 @@ import json
 from mlflow.tracking import MlflowClient
 import joblib  # pour charger le modèle pré-enregistré localement
 
+from pathlib import Path
+
 MODEL_NAME = "CreditDefaultModel"
 MODEL_ALIAS = "staging"
-LOCAL_MODEL_FILE = "model.pkl"
-LOCAL_THRESHOLD_FILE = "best_threshold.json"
+
+OUTPUT_DIR = Path("outputs")
+LOCAL_MODEL_FILE = OUTPUT_DIR / "model.pkl"
+LOCAL_THRESHOLD_FILE = OUTPUT_DIR / "best_threshold.json"
 
 class DummyModel:
     def predict_proba(self, X):
