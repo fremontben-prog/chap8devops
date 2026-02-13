@@ -3,6 +3,7 @@ from api.model_loader import BEST_THRESHOLD
 from api.main import app
 import json
 import os
+import logging
 
 # Charge les fichiers JSON depuis la racine
 file_path = os.path.join(os.path.dirname(__file__), "../donnees_test_true.json")
@@ -42,6 +43,9 @@ def test_prediction_true():
         assert isinstance(proba, float)
         assert isinstance(pred, int)
 
+        logger = logging.getLogger(__name__)
+        # Cette ligne s'affichera automatiquement dans GitHub Actions
+        logger.info(f"Vérification : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD}")
 
         if proba >= BEST_THRESHOLD:
             assert pred == 1
@@ -70,6 +74,10 @@ def test_prediction_false():
         proba = json_resp["probability"]
         pred = json_resp["prediction"]
 
+        logger = logging.getLogger(__name__)
+        # Cette ligne s'affichera automatiquement dans GitHub Actions
+        logger.info(f"Vérification : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD}")
+        
         # Vérifie types
         assert isinstance(proba, float)
         assert isinstance(pred, int)

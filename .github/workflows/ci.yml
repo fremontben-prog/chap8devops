@@ -43,7 +43,7 @@ jobs:
         env:
           ENV: test
           PYTHONPATH: ${{ github.workspace }}
-        run: pytest --maxfail=1 --disable-warnings -v
+        run: pytest --maxfail=1 --disable-warnings -v -s
 
   # ==========================
   # BUILD DOCKER IMAGE
