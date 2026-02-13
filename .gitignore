@@ -6,8 +6,6 @@ __pycache__/
 
 # Données
 data/
-outputs/
-*.csv
 
 # Résultats & figures
 *.png

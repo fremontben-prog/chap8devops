@@ -91,8 +91,8 @@ def plot_cost_threshold(thresholds, costs, output_path="cost_vs_threshold.png"):
     plt.grid(True)
 
     plt.tight_layout()
-    fi_path = OUTPUT_DIR / output_path
-    plt.savefig(fi_path)
+    output_path = OUTPUT_DIR / output_path
+    plt.savefig(output_path)
     plt.close()
 
     return output_path

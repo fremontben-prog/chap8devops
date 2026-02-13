@@ -17,6 +17,11 @@ client = TestClient(app)
 
 # Tests pour des valeurs de clients à true
 def test_prediction_true():
+    # Charge les fichiers JSON depuis la racine
+    file_path = os.path.join(os.path.dirname(__file__), "../donnees_test_true.json")
+    with open(file_path, "r") as f:
+        test_data_true = json.load(f)
+        
     for row in test_data_true:
 
         row_copy = row.copy()
@@ -46,6 +51,10 @@ def test_prediction_true():
         
 # Tests pour des valeurs de clients à false
 def test_prediction_false():
+    file_path = os.path.join(os.path.dirname(__file__), "../donnees_test_false.json")
+    with open(file_path, "r") as f:
+        test_data_false = json.load(f)
+        
     for row in test_data_false:
         row_copy = row.copy()
         expected = row_copy.pop("TARGET")
