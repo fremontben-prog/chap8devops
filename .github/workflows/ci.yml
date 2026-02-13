@@ -32,18 +32,11 @@ jobs:
       - name: Install joblib (for local model in tests)
         run: pip install joblib
 
-      - name: Preload dummy model for tests
+      - name: Copy trained model for tests
+        # Suppose que final_model.pkl et best_threshold.json sont commités dans le repo
         run: |
-          python - <<EOF
-          import joblib, json
-          from api.model import train_model  # adapte selon ton script
-          
-          model = train_model()
-          joblib.dump(model, "model.pkl")
-          
-          with open("best_threshold.json", "w") as f:
-              json.dump({"best_threshold": 0.5}, f)
-          EOF
+          echo "Using pre-trained model for CI tests"
+          ls -l final_model.pkl best_threshold.json
 
       - name: Run tests
         env:
