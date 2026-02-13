@@ -50,6 +50,7 @@ def load_model_and_threshold():
     # --------------------
     # Mode prod : MLflow réel
     # --------------------
+    print("=== MODE PROD ===")
     mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "http://host.docker.internal:5001"))
 
     model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
