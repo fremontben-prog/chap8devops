@@ -36,7 +36,8 @@ jobs:
         # Suppose que final_model.pkl et best_threshold.json sont commités dans le repo
         run: |
           echo "Using pre-trained model for CI tests"
-          ls -l final_model.pkl best_threshold.json
+          ls -l outputs/final_model.pkl
+          ls -l outputs/best_threshold.json
 
       - name: Run tests
         env:
