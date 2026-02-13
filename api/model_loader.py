@@ -5,7 +5,17 @@ from mlflow.tracking import MlflowClient
 MODEL_NAME = "CreditDefaultModel"
 MODEL_ALIAS = "staging"
 
+class DummyModel:
+    def predict_proba(self, X):
+        import numpy as np
+        return np.array([[0.3, 0.7]])
+    
+
 def load_model_and_threshold():
+
+    if os.getenv("ENV") == "test":
+        return DummyModel(), 0.5
+
     mlflow.set_tracking_uri(
         os.getenv("MLFLOW_TRACKING_URI", "http://host.docker.internal:5001")
     )
