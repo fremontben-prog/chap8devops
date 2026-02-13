@@ -7,7 +7,6 @@ import os
 from api.schemas import PredictionInput, PredictionOutput
 from api.model_loader import get_model_and_threshold
 
-model, BEST_THRESHOLD = load_model_and_threshold()
 
 # Chargement des variables de .env
 from dotenv import load_dotenv
