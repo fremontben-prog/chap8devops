@@ -29,12 +29,27 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install joblib (for local model in tests)
+        run: pip install joblib
+
+      - name: Preload dummy model for tests
+        run: |
+          python - <<EOF
+          import joblib, json
+          from api.model import train_model  # adapte selon ton script
+          
+          model = train_model()
+          joblib.dump(model, "model.pkl")
+          
+          with open("best_threshold.json", "w") as f:
+              json.dump({"best_threshold": 0.5}, f)
+          EOF
+
       - name: Run tests
         env:
           ENV: test
           PYTHONPATH: ${{ github.workspace }}
         run: pytest --maxfail=1 --disable-warnings -v
-
 
   # ==========================
   # BUILD DOCKER IMAGE
@@ -49,7 +64,6 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t credit-default-api .
-
 
   # ==========================
   # PUSH TO DOCKER HUB
@@ -70,4 +84,3 @@ jobs:
 
       - name: Push Docker image
         run: docker push ${{ secrets.DOCKER_USERNAME }}/credit-default-api:latest
-

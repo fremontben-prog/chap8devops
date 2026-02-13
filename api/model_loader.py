@@ -1,53 +1,52 @@
 import os
 import mlflow
+import json
 from mlflow.tracking import MlflowClient
+import joblib  # pour charger le modèle pré-enregistré localement
 
 MODEL_NAME = "CreditDefaultModel"
 MODEL_ALIAS = "staging"
+LOCAL_MODEL_FILE = "model.pkl"
+LOCAL_THRESHOLD_FILE = "best_threshold.json"
 
 class DummyModel:
     def predict_proba(self, X):
         import numpy as np
+        # retourne toujours la même prédiction pour le test
         return np.array([[0.3, 0.7]])
-    
 
 def load_model_and_threshold():
+    env = os.getenv("ENV", "prod")
 
-    if os.getenv("ENV") == "test":
+    # --------------------
+    # Mode test : dummy ou modèle local
+    # --------------------
+    if env == "test":
+        # Si on a dumpé le modèle localement
+        if os.path.exists(LOCAL_MODEL_FILE):
+            
+            model = joblib.load(LOCAL_MODEL_FILE)
+            with open(LOCAL_THRESHOLD_FILE, "r") as f:
+                best_threshold = json.load(f)["best_threshold"]
+            return model, best_threshold
+        # Sinon fallback Dummy
         return DummyModel(), 0.5
 
-    mlflow.set_tracking_uri(
-        os.getenv("MLFLOW_TRACKING_URI", "http://host.docker.internal:5001")
-    )
+    # --------------------
+    # Mode prod : MLflow réel
+    # --------------------
+    mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "http://host.docker.internal:5001"))
 
     model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
     model = mlflow.sklearn.load_model(model_uri)
-     
+    
     client = MlflowClient()
-
-    # Récupérer la version via alias
-    model_version = client.get_model_version_by_alias(
-        MODEL_NAME, MODEL_ALIAS
-    )
-
+    model_version = client.get_model_version_by_alias(MODEL_NAME, MODEL_ALIAS)
     run_id = model_version.run_id
-
-    # Charger le modèle
-    model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
-    model = mlflow.sklearn.load_model(model_uri)
-
-    # Récupérer le run
     run = client.get_run(run_id)
-
-    # Récupérer le threshold
     best_threshold = float(run.data.params.get("best_threshold", 0.5))
 
     return model, best_threshold
 
-
 # Charger le modèle une seule fois au démarrage
 model, BEST_THRESHOLD = load_model_and_threshold()
-
-
-
-
