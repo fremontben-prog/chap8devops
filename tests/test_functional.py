@@ -74,6 +74,7 @@ def test_prediction_false():
         proba = json_resp["probability"]
         pred = json_resp["prediction"]
 
+        # Log des valeurs de prédiction
         logger = logging.getLogger(__name__)
         # Cette ligne s'affichera automatiquement dans GitHub Actions
         logger.info(f"Vérification : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD}")
