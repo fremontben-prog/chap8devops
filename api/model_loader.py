@@ -13,6 +13,7 @@ OUTPUT_DIR = Path("outputs")
 LOCAL_MODEL_FILE = OUTPUT_DIR / "model.pkl"
 LOCAL_THRESHOLD_FILE = OUTPUT_DIR / "best_threshold.json"
 
+
 class DummyModel:
     def predict_proba(self, X):
         import numpy as np
@@ -21,7 +22,7 @@ class DummyModel:
 
 def load_model_and_threshold():
     env = os.getenv("ENV", "prod")
-
+    print("ENV value:", env)
     # --------------------
     # Mode test : dummy ou modèle local
     # --------------------
@@ -64,5 +65,3 @@ def load_model_and_threshold():
 
     return model, best_threshold
 
-# Charger le modèle une seule fois au démarrage
-model, BEST_THRESHOLD = load_model_and_threshold()
