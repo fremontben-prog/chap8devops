@@ -32,6 +32,7 @@ def load_model_and_threshold():
             model = joblib.load(LOCAL_MODEL_FILE)
             with open(LOCAL_THRESHOLD_FILE, "r") as f:
                 best_threshold = json.load(f)["best_threshold"]
+                print(f"Best threshold {best_threshold}")
             return model, best_threshold
         # Sinon fallback Dummy
         return DummyModel(), 0.5
