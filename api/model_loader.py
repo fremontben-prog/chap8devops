@@ -28,11 +28,21 @@ def load_model_and_threshold():
     if env == "test":
         # Si on a dumpé le modèle localement
         if os.path.exists(LOCAL_MODEL_FILE):
-            
+            print("=== MODE TEST ===")
+            print(f"Model path: {LOCAL_MODEL_FILE}")
+            print(f"Threshold path: {LOCAL_THRESHOLD_FILE}")
+
             model = joblib.load(LOCAL_MODEL_FILE)
+
+            print(f"Model type: {type(model)}")
+            print(f"Model attributes: {dir(model)}")
+
             with open(LOCAL_THRESHOLD_FILE, "r") as f:
-                best_threshold = json.load(f)["best_threshold"]
-                print(f"Best threshold {best_threshold}")
+                threshold_data = json.load(f)
+                print(f"Threshold file content: {threshold_data}")
+
+                best_threshold = threshold_data["best_threshold"]
+                print(f"Best threshold loaded: {best_threshold}")
             return model, best_threshold
         # Sinon fallback Dummy
         return DummyModel(), 0.5
