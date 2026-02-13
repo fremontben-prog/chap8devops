@@ -45,7 +45,8 @@ def test_prediction_true():
 
         logger = logging.getLogger(__name__)
         # Cette ligne s'affichera automatiquement dans GitHub Actions
-        logger.info(f"Vérification : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD}")
+        logger.info(f"Vérification true : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD} | Expected ={expected}")
+        print(f"Vérification : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD} | Expected ={expected}")
 
         if proba >= BEST_THRESHOLD:
             assert pred == 1
@@ -78,7 +79,8 @@ def test_prediction_false():
         logger = logging.getLogger(__name__)
         # Cette ligne s'affichera automatiquement dans GitHub Actions
         logger.info(f"Vérification : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD}")
-        print(f"Vérification : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD}")
+        #
+        print(f"Vérification : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD} | Expected ={expected}")
         
         # Vérifie types
         assert isinstance(proba, float)
