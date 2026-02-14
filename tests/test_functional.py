@@ -23,7 +23,7 @@ def test_prediction_true():
         expected = row_copy.pop("TARGET")
 
         response = client.post("/predict", json=row_copy)
-        print(response.json())
+        print(f"BFR reponse json {response.json()}")
         assert response.status_code == 200
 
         json_resp = response.json()

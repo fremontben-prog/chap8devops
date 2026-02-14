@@ -23,14 +23,20 @@ mlflow.set_tracking_uri(
 def health():
     return {"status": "API running"}
 
+
 @app.post("/predict", response_model=PredictionOutput)
 def predict(data: PredictionInput):
     model, BEST_THRESHOLD = get_model_and_threshold()
+    
     try:
+        # 1️⃣ Transformer en DataFrame
         df = pd.DataFrame([data.model_dump()])
-        
 
-        proba = model.predict_proba(df)[:, 1][0]
+        # 2️⃣ Forcer exactement les colonnes vues à l'entraînement
+        df = df.reindex(columns=model.feature_names_in_, fill_value=0)
+
+        # 3️⃣ Prédiction
+        proba = model.predict_proba(df)[0][1]
         prediction = int(proba >= BEST_THRESHOLD)
 
         return {
