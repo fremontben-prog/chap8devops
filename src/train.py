@@ -121,8 +121,8 @@ def main(debug = True):
         
         
     # Sélection de valeur true et false
-    df_selection_true = df[df['TARGET'] == 1].head(5)
-    df_selection_false = df[df['TARGET'] == 0].head(5)
+    df_selection_true = df[df['TARGET'] == 1].head(1)
+    df_selection_false = df[df['TARGET'] == 0].head(1)
     
     # Export en JSON pour récupérer des valeurs pour tester API
     df_selection_true.to_json(
@@ -143,7 +143,7 @@ def main(debug = True):
     
     print(f"Export (False) terminé : {len(df_selection_false)} lignes enregistrées.")
         
-    
+    sys.exit(0)
     with timer("Run LogisticRegression"):
         lr_results = kfold_logistic_regression(
             df,
