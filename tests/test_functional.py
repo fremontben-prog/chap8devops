@@ -16,7 +16,6 @@ def test_prediction_true():
     # Charge les fichiers JSON depuis la racine
     file_path = os.path.join(os.path.dirname(__file__), "../donnees_test_true.json")
     with open(file_path, "r") as f:
-        print(f"BFR Test Data true")
         test_data_true = json.load(f)        
         
     for row in test_data_true:
@@ -85,6 +84,6 @@ def test_prediction_false():
 
         # Cohérence seuil
         if proba < BEST_THRESHOLD:
-            assert pred == 1
-        else:
             assert pred == 0
+        else:
+            assert pred == 1
