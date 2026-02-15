@@ -16,12 +16,11 @@ def test_prediction_true():
     # Charge les fichiers JSON depuis la racine
     file_path = os.path.join(os.path.dirname(__file__), "../donnees_test_true.json")
     with open(file_path, "r") as f:
-        test_data_true = json.load(f)
-        
-    # Conversion des colonnes object
-    test_data_true = clean_object_type(test_data_true)
-
-    test_data_true = clean_feature_names(test_data_true)
+        print(f"BFR Test Data true")
+        test_data_true = json.load(f)        
+        # Conversion des colonnes object
+        test_data_true = clean_object_type(test_data_true)
+        test_data_true = clean_feature_names(test_data_true)
         
     for row in test_data_true:
 
