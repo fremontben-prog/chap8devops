@@ -19,9 +19,9 @@ def test_prediction_true():
         test_data_true = json.load(f)
         
     # Conversion des colonnes object
-    df = clean_object_type(df)
+    test_data_true = clean_object_type(test_data_true)
 
-    df = clean_feature_names(df)
+    test_data_true = clean_feature_names(test_data_true)
         
     for row in test_data_true:
 
