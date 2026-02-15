@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from api.model_loader import get_model_and_threshold
 from api.main import app
+from src.feature import (clean_feature_names, clean_object_type)
 import json
 import os
 import logging
@@ -16,6 +17,11 @@ def test_prediction_true():
     file_path = os.path.join(os.path.dirname(__file__), "../donnees_test_true.json")
     with open(file_path, "r") as f:
         test_data_true = json.load(f)
+        
+    # Conversion des colonnes object
+    df = clean_object_type(df)
+
+    df = clean_feature_names(df)
         
     for row in test_data_true:
 

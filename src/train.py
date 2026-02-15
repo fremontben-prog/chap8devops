@@ -27,7 +27,8 @@ from src.feature import (
     pos_cash, 
     installments_payments, 
     credit_card_balance,
-    clean_feature_names
+    clean_feature_names,
+    clean_object_type
 )
 
 from src.model import (

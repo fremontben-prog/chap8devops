@@ -240,3 +240,10 @@ def clean_feature_names(df):
     ]
     return df
 
+def clean_object_type(df) :
+    # Conversion des colonnes object
+    for col in df.columns:
+        if df[col].dtype == "object":
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+    return df
+
