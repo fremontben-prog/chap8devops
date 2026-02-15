@@ -18,9 +18,6 @@ def test_prediction_true():
     with open(file_path, "r") as f:
         print(f"BFR Test Data true")
         test_data_true = json.load(f)        
-        # Conversion des colonnes object
-        test_data_true = clean_object_type(test_data_true)
-        test_data_true = clean_feature_names(test_data_true)
         
     for row in test_data_true:
 

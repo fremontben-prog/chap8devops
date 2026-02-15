@@ -27,15 +27,21 @@ def health():
 @app.post("/predict", response_model=PredictionOutput)
 def predict(data: PredictionInput):
     model, BEST_THRESHOLD = get_model_and_threshold()
-    
+
     try:
-        # 1️⃣ Transformer en DataFrame
+        # 1️⃣ JSON -> DataFrame
         df = pd.DataFrame([data.model_dump()])
 
-        # 2️⃣ Forcer exactement les colonnes vues à l'entraînement
+        # 2️⃣ Colonnes exactes
         df = df.reindex(columns=model.feature_names_in_, fill_value=0)
 
-        # 3️⃣ Prédiction
+        # 3️⃣ Conversion numérique (🔥 ICI)
+        df = df.apply(pd.to_numeric, errors="coerce")
+
+        # 4️⃣ Remplacer NaN
+        df = df.fillna(0)
+
+        # 5️⃣ Predict
         proba = model.predict_proba(df)[0][1]
         prediction = int(proba >= BEST_THRESHOLD)
 
