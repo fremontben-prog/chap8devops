@@ -54,7 +54,7 @@ def predict(data: PredictionInput):
 
         # 3. Tentative de Log (Elasticsearch) - Ne doit pas bloquer le retour
         log_data = {
-            "timestamp": datetime.now(), # Vérifiez votre import ici !
+            "timestamp": datetime.now().isoformat(),
             "model_version": "v1.0",
             "input_features": input_dict,
             "prediction": prediction,
@@ -63,15 +63,15 @@ def predict(data: PredictionInput):
             "status_code": 200
         }
             
-        # Bloc de log ultra-sécurisé
-        if es is not None:
-            try:
-                es.index(index="api-logs", document=log_data)
-            except Exception as e:
-                # On log l'erreur dans la console, mais on ne bloque pas l'utilisateur !
-                print(f"Échec de l'envoi vers Elasticsearch : {e}")
-
-        # 4. Retour de la réponse
+        # Test de connexion et création d'index immédiat
+        try:
+            if not es.indices.exists(index="api-logs"):
+                es.indices.create(index="api-logs")
+                print("Index 'api-logs' créé avec succès !")
+        except Exception as e:
+            print(f"Erreur d'initialisation ES : {e}")
+            
+            # 4. Retour de la réponse
         return {
             "probability": proba,
             "prediction": prediction
