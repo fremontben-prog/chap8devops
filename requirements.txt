@@ -11,3 +11,4 @@ httpx
 optuna
 matplotlib
 joblib
+elasticsearch
