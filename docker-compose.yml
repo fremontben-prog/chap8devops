@@ -19,3 +19,11 @@ services:
       - "5601:5601"
     depends_on:
       - elasticsearch
+
+  api:
+    build: .
+    container_name: api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - elasticsearch
