@@ -27,6 +27,7 @@ mlflow.set_tracking_uri(
     os.getenv("MLFLOW_TRACKING_URI", "http://host.docker.internal:5001")
 )
 
+print("Elasticsearch ping:", es.ping())
 
 @app.get("/")
 def health():
@@ -64,9 +65,9 @@ def predict(data: PredictionInput):
     try:
         # Log
         log_data = {
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(),
             "model_version": "v1.0",
-            "input_features": data.model_dump_json(),
+            "input_features": data.model_dump(),
             "prediction": prediction,
             "probability": float(proba),
             "execution_time_ms": exec_time,
