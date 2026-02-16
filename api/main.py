@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import os
 
+from logging import Logger
+
 from api.schemas import PredictionInput, PredictionOutput
 from api.model_loader import get_model_and_threshold
 
@@ -56,8 +58,12 @@ def predict(data: PredictionInput):
         # Temps d'exécution
         exec_time = (time.time() - start) * 1000
 
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    try:
         # Log
-        log = {
+        log_data = {
             "timestamp": datetime.utcnow(),
             "model_version": "v1.0",
             "input_features": data.model_dump_json(),
@@ -66,13 +72,16 @@ def predict(data: PredictionInput):
             "execution_time_ms": exec_time,
             "status_code": 200
         }
+    
 
-        es.index(index="api-logs", document=log)
+        es.index(index="api-logs", document=log_data)
+    except Exception as e:
+        logger.warning(f"Elasticsearch unavailable: {e}")
+        
 
         return {
             "probability": float(proba),
             "prediction": prediction
         }
 
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    
