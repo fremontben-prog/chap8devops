@@ -7,6 +7,13 @@ import os
 from api.schemas import PredictionInput, PredictionOutput
 from api.model_loader import get_model_and_threshold
 
+from elasticsearch import Elasticsearch
+from datetime import datetime
+import time
+
+# 
+es = Elasticsearch("http://elasticsearch:9200")
+
 
 # Chargement des variables de .env
 from dotenv import load_dotenv
@@ -27,7 +34,8 @@ def health():
 @app.post("/predict", response_model=PredictionOutput)
 def predict(data: PredictionInput):
     model, BEST_THRESHOLD = get_model_and_threshold()
-
+    
+    start = time.time()
     try:
         # 1️⃣ JSON -> DataFrame
         df = pd.DataFrame([data.model_dump()])
@@ -35,7 +43,7 @@ def predict(data: PredictionInput):
         # 2️⃣ Colonnes exactes
         df = df.reindex(columns=model.feature_names_in_, fill_value=0)
 
-        # 3️⃣ Conversion numérique (🔥 ICI)
+        # 3️⃣ Conversion numérique
         df = df.apply(pd.to_numeric, errors="coerce")
 
         # 4️⃣ Remplacer NaN
@@ -44,6 +52,22 @@ def predict(data: PredictionInput):
         # 5️⃣ Predict
         proba = model.predict_proba(df)[0][1]
         prediction = int(proba >= BEST_THRESHOLD)
+        
+        # Temps d'exécution
+        exec_time = (time.time() - start) * 1000
+
+        # Log
+        log = {
+            "timestamp": datetime.utcnow(),
+            "model_version": "v1.0",
+            "input_features": data.model_dump_json(),
+            "prediction": prediction,
+            "probability": float(proba),
+            "execution_time_ms": exec_time,
+            "status_code": 200
+        }
+
+        es.index(index="api-logs", document=log)
 
         return {
             "probability": float(proba),
