@@ -68,6 +68,8 @@ def predict(data: PredictionInput):
             if not es.indices.exists(index="api-logs"):
                 es.indices.create(index="api-logs")
                 print("Index 'api-logs' créé avec succès !")
+                
+            es.index(index="api-logs", document=log_data)
         except Exception as e:
             print(f"Erreur d'initialisation ES : {e}")
             
