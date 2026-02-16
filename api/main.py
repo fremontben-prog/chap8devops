@@ -53,19 +53,23 @@ def predict(data: PredictionInput):
         exec_time = (time.time() - start) * 1000
 
         # 3. Tentative de Log (Elasticsearch) - Ne doit pas bloquer le retour
-        try:
-            log_data = {
-                "timestamp": datetime.now(), # Vérifiez votre import ici !
-                "model_version": "v1.0",
-                "input_features": input_dict,
-                "prediction": prediction,
-                "probability": proba,
-                "execution_time_ms": exec_time,
-                "status_code": 200
-            }
-            es.index(index="api-logs", document=log_data)
-        except Exception as log_err:
-            print(f"Logging failed: {log_err}")
+        log_data = {
+            "timestamp": datetime.now(), # Vérifiez votre import ici !
+            "model_version": "v1.0",
+            "input_features": input_dict,
+            "prediction": prediction,
+            "probability": proba,
+            "execution_time_ms": exec_time,
+            "status_code": 200
+        }
+            
+        # Bloc de log ultra-sécurisé
+        if es is not None:
+            try:
+                es.index(index="api-logs", document=log_data)
+            except Exception as e:
+                # On log l'erreur dans la console, mais on ne bloque pas l'utilisateur !
+                print(f"Échec de l'envoi vers Elasticsearch : {e}")
 
         # 4. Retour de la réponse
         return {
