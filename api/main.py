@@ -38,53 +38,41 @@ def health():
 @app.post("/predict", response_model=PredictionOutput)
 def predict(data: PredictionInput):
     model, BEST_THRESHOLD = get_model_and_threshold()
-    
     start = time.time()
+    
     try:
-        # 1️⃣ Convertir JSON -> DataFrame
-        df = pd.DataFrame([data.model_dump()])
-
-        # 2️⃣ Assurer les colonnes exactes du modèle
+        # 1. Préparation des données
+        input_dict = data.model_dump()
+        df = pd.DataFrame([input_dict])
         df = df.reindex(columns=model.feature_names_in_, fill_value=0)
+        df = df.apply(pd.to_numeric, errors="coerce").fillna(0)
 
-        # 3️⃣ Conversion en numérique
-        df = df.apply(pd.to_numeric, errors="coerce")
-
-        # 4️⃣ Remplacer les NaN par 0
-        df = df.fillna(0)
-
-        # 5️⃣ Prédiction
-        proba = model.predict_proba(df)[0][1]
+        # 2. Prédiction
+        proba = float(model.predict_proba(df)[0][1])
         prediction = int(proba >= BEST_THRESHOLD)
-
-        # Temps d'exécution
         exec_time = (time.time() - start) * 1000
 
+        # 3. Tentative de Log (Elasticsearch) - Ne doit pas bloquer le retour
+        try:
+            log_data = {
+                "timestamp": datetime.now(), # Vérifiez votre import ici !
+                "model_version": "v1.0",
+                "input_features": input_dict,
+                "prediction": prediction,
+                "probability": proba,
+                "execution_time_ms": exec_time,
+                "status_code": 200
+            }
+            es.index(index="api-logs", document=log_data)
+        except Exception as log_err:
+            print(f"Logging failed: {log_err}")
+
+        # 4. Retour de la réponse
+        return {
+            "probability": proba,
+            "prediction": prediction
+        }
+
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Prediction error: {str(e)}")
-    
-    # Préparer le log Elasticsearch
-    log_data = {
-        "timestamp": datetime.now(),
-        "model_version": "v1.0",
-        "input_features": data.model_dump(),
-        "prediction": prediction,
-        "probability": float(proba),
-        "execution_time_ms": exec_time,
-        "status_code": 200
-    }
-
-    # Essayer d'envoyer le log, mais ne pas bloquer la réponse
-    try:
-        logger = logging.getLogger(__name__)
-        es.index(index="api-logs", document=log_data)
-    except Exception as e:
-        logger.warning(f"Elasticsearch unavailable: {e}")
-
-    # Retour toujours
-    return {
-        "probability": float(proba),
-        "prediction": prediction
-    }
-
-    
+        # Transforme l'erreur 500 en 400 avec un message explicite
+        raise HTTPException(status_code=400, detail=f"Erreur lors de la prédiction: {str(e)}")
