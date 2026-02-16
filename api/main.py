@@ -3,8 +3,8 @@ import mlflow
 import pandas as pd
 import numpy as np
 import os
+import logging
 
-from logging import Logger
 
 from api.schemas import PredictionInput, PredictionOutput
 from api.model_loader import get_model_and_threshold
@@ -73,7 +73,7 @@ def predict(data: PredictionInput):
             "status_code": 200
         }
     
-
+        logger = logging.getLogger(__name__)
         es.index(index="api-logs", document=log_data)
     except Exception as e:
         logger.warning(f"Elasticsearch unavailable: {e}")
