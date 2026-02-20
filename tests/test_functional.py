@@ -78,7 +78,7 @@ def test_smoke_prediction(filename):
 @pytest.mark.parametrize("filename", ["donnees_test_full_true.json", "donnees_test_full_false.json"])
 def test_full_prediction(filename):
     """Test complet sur toutes les données pour non-régression"""
-    test_data = load_test_data(OUTPUT_DIR / filename)
+    test_data = load_test_data(filename)
     for row in test_data:
         row_copy = row.copy()
         expected = row_copy.pop("TARGET", None)
@@ -105,7 +105,7 @@ def test_invalid_data(invalid_row):
 # --------------------------
 @pytest.mark.smoke
 def test_prediction_performance():
-    test_data = load_test_data(OUTPUT_DIR / "donnees_test_true.json")
+    test_data = load_test_data("donnees_test_true.json")
     for row in test_data[:5]:
         start = time.time()
         response = client.post("/predict", json=row)
@@ -131,7 +131,7 @@ def test_extreme_values(extreme_row):
 # --------------------------
 @pytest.mark.long
 def test_golden_set():
-    golden_data = load_test_data(OUTPUT_DIR / "donnees_test_true.json")
+    golden_data = load_test_data("donnees_test_true.json")
     for row in golden_data:
         row_copy = row.copy()
         expected = row_copy.pop("TARGET", None)
