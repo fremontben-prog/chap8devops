@@ -185,8 +185,8 @@ def main(debug = True):
     df_selection_false = df[df['TARGET'] == 0].head(1)
     
     # Sélection de valeurs true et false pour tests de tout le jeu de test
-    df_selection_complet_true = df[df['TARGET'] == 1]
-    df_selection_complet_false = df[df['TARGET'] == 0]
+    df_selection_complet_true = df[df['TARGET'] == 1].head(100)
+    df_selection_complet_false = df[df['TARGET'] == 0].head(100)
     
     # Export en JSON pour récupérer des valeurs pour tester API rapidement
     output_file = OUTPUT_DIR / 'donnees_test_true.json'
