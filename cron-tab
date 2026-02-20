@@ -1,0 +1,3 @@
+# Exécution tous les jours à minuit
+0 0 * * * root python /app/drift_monitor.py >> /var/log/cron.log 2>&1
+# Laisse une ligne vide ici

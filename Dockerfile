@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements_api.txt
 
 COPY api/ ./api/
 COPY src/ ./src/
+COPY monitoring/ ./monitoring
 
 EXPOSE 8000
 

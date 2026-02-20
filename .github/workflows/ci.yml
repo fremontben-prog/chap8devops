@@ -2,12 +2,13 @@ name: CI/CD - Credit Default API
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [master, develop]
+    tags:
+      - "v*.*"
   pull_request:
-    branches: [ "master" ]
+    branches: [master, develop]
 
 jobs:
-
   # ==========================
   # TEST JOB
   # ==========================
@@ -39,7 +40,22 @@ jobs:
           ls -l outputs/final_model.pkl
           ls -l outputs/best_threshold.json
 
-      - name: Run tests
+      
+      # -----------------------------
+      # FAST TESTS (PR + develop)
+      # -----------------------------
+      - name: Run fast tests (no long)
+        if: github.ref_name != 'master'
+        env:
+          ENV: test
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest -m "not long" --maxfail=1 --disable-warnings -v -o log_cli_level=INFO
+
+      # -----------------------------
+      # FULL TEST SUITE (master)
+      # -----------------------------
+      - name: Run full test suite (including long)
+        if: github.ref_name == 'master'
         env:
           ENV: test
           PYTHONPATH: ${{ github.workspace }}
@@ -65,6 +81,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - name: Checkout repository
@@ -78,3 +95,5 @@ jobs:
 
       - name: Push Docker image
         run: docker push ${{ secrets.DOCKER_USERNAME }}/credit-default-api:latest
+
+        

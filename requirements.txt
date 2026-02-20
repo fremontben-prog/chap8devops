@@ -11,4 +11,7 @@ httpx
 optuna
 matplotlib
 joblib
-elasticsearch
+elasticsearch==8.12.0
+xgboost==2.0.3
+shap==0.44.1
+numpy<2

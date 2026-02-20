@@ -9,26 +9,31 @@ import logging
 from api.schemas import PredictionInput, PredictionOutput
 from api.model_loader import get_model_and_threshold
 
+from monitoring.drift_monitor import INDEX_PROD, run_global_monitoring
+
 from elasticsearch import Elasticsearch
 from datetime import datetime
 import time
 
 # ElasticSarch avec
-es = Elasticsearch("http://elasticsearch:9200")
+ES_HOST = os.getenv("ES_HOST", "localhost")
+es = Elasticsearch(f"http://{ES_HOST}:9200")
 
-
+print("Elasticsearch ping:", es.ping())
 
 # Chargement des variables de .env
 from dotenv import load_dotenv
 load_dotenv()
 
+# API Fast API
 app = FastAPI(title="Credit Default API")
 
+# MlFlow
 mlflow.set_tracking_uri(
     os.getenv("MLFLOW_TRACKING_URI", "http://host.docker.internal:5001")
 )
 
-print("Elasticsearch ping:", es.ping())
+
 
 @app.get("/")
 def health():
@@ -65,11 +70,11 @@ def predict(data: PredictionInput):
             
         # Test de connexion et création d'index immédiat
         try:
-            if not es.indices.exists(index="api-logs"):
-                es.indices.create(index="api-logs")
-                print("Index 'api-logs' créé avec succès !")
+            if not es.indices.exists(index=INDEX_PROD):
+                es.indices.create(index=INDEX_PROD)
+                print(f"Index {INDEX_PROD} créé avec succès !")
                 
-            es.index(index="api-logs", document=log_data)
+            es.index(index=INDEX_PROD, document=log_data)
         except Exception as e:
             print(f"Erreur d'initialisation ES : {e}")
             
@@ -82,3 +87,11 @@ def predict(data: PredictionInput):
     except Exception as e:
         # Transforme l'erreur 500 en 400 avec un message explicite
         raise HTTPException(status_code=400, detail=f"Erreur lors de la prédiction: {str(e)}")
+    
+    
+
+# Endpoint pour exécution du monitoring
+@app.post("/run-drift")
+def run_drift():
+    run_global_monitoring()
+    return {"status": "Drift monitoring executed"}

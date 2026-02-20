@@ -1,89 +1,138 @@
 from fastapi.testclient import TestClient
 from api.model_loader import get_model_and_threshold
 from api.main import app
-from src.feature import (clean_feature_names, clean_object_type)
+
 import json
 import os
 import logging
+import pytest
+import time
+
+from pathlib import Path 
 
 
 client = TestClient(app)
 
+# Récupération du seuil
 _, BEST_THRESHOLD = get_model_and_threshold()
 
-# Tests pour des valeurs de clients à true
-def test_prediction_true():
-    # Charge les fichiers JSON depuis la racine
-    file_path = os.path.join(os.path.dirname(__file__), "../donnees_test_true.json")
+# CHemin des fichiers JSON
+OUTPUT_DIR = Path("outputs")
+
+logger = logging.getLogger(__name__)    
+
+# --------------------------
+# Fonctions utilitaires
+# --------------------------
+def load_test_data(filename):
+    file_path = os.path.join(os.path.dirname(__file__), filename)
     with open(file_path, "r") as f:
-        test_data_true = json.load(f)        
-        
-    for row in test_data_true:
+        return json.load(f)
+    
+def check_prediction(row, json_resp, expected=None):
+    assert "probability" in json_resp
+    assert "prediction" in json_resp
 
+    proba = json_resp["probability"]
+    pred = json_resp["prediction"]
+
+    # Types
+    assert isinstance(proba, float)
+    assert isinstance(pred, int)
+    # Probabilité valide
+    assert 0.0 <= proba <= 1.0
+    # Cohérence seuil
+    if proba >= BEST_THRESHOLD:
+        assert pred == 1
+    else:
+        assert pred == 0
+    # Optionnel : vérifier avec valeur attendue
+    if expected is not None:
+        assert expected in [0, 1]
+
+    logger.info(f"Proba={proba:.4f} | Pred={pred} | Expected={expected}")
+    
+       
+###########################################################
+
+# --------------------------
+# 1️⃣ Tests rapides (smoke) – pour CI rapide
+# --------------------------
+@pytest.mark.smoke
+@pytest.mark.parametrize("filename", ["donnees_test_true.json", "donnees_test_false.json"])
+def test_smoke_prediction(filename):
+    """Test rapide pour CI, vérifie structure et cohérence sur un petit échantillon"""
+    test_data = load_test_data(OUTPUT_DIR / filename)
+    for row in test_data:  
         row_copy = row.copy()
-        expected = row_copy.pop("TARGET")
-
-        response = client.post("/predict", json=row_copy)
-        print(f"BFR reponse json {response.json()}")
-        assert response.status_code == 200
-
-        json_resp = response.json()
-
-        assert "probability" in json_resp
-        assert "prediction" in json_resp
-        
-        # Vérifie structure
-        proba = json_resp["probability"]
-        pred = json_resp["prediction"]
-
-        assert isinstance(proba, float)
-        assert isinstance(pred, int)
-
-        logger = logging.getLogger(__name__)
-        # Cette ligne s'affichera automatiquement dans GitHub Actions
-        logger.info(f"Vérification true : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD} | Expected ={expected}")
-        print(f"Vérification : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD} | Expected ={expected}")
-
-        if proba >= BEST_THRESHOLD:
-            assert pred == 1
-        else:
-            assert pred == 0
-        
-# Tests pour des valeurs de clients à false
-def test_prediction_false():
-    file_path = os.path.join(os.path.dirname(__file__), "../donnees_test_false.json")
-    with open(file_path, "r") as f:
-        test_data_false = json.load(f)
-        
-    for row in test_data_false:
-        row_copy = row.copy()
-        expected = row_copy.pop("TARGET")
-        
+        expected = row_copy.pop("TARGET", None)
         response = client.post("/predict", json=row_copy)
         assert response.status_code == 200
+        check_prediction(row, response.json(), expected)
 
-        json_resp = response.json()
+# --------------------------
+# 2️⃣ Tests longs / robustesse – moins fréquents
+# --------------------------
+@pytest.mark.long
+@pytest.mark.parametrize("filename", ["donnees_test_full_true.json", "donnees_test_full_false.json"])
+def test_full_prediction(filename):
+    """Test complet sur toutes les données pour non-régression"""
+    test_data = load_test_data(OUTPUT_DIR / filename)
+    for row in test_data:
+        row_copy = row.copy()
+        expected = row_copy.pop("TARGET", None)
+        response = client.post("/predict", json=row_copy)
+        assert response.status_code == 200
+        check_prediction(row, response.json(), expected)
 
-        # Vérifie structure
-        assert "probability" in json_resp
-        assert "prediction" in json_resp
+# --------------------------
+# 3️⃣ Tests de validité / erreurs
+# --------------------------
+@pytest.mark.smoke
+@pytest.mark.parametrize("invalid_row", [
+    {},  # tout vide
+    {"AMT_CREDIT": "invalid_string"},  # type incorrect
+    {"AMT_CREDIT": None, "DAYS_BIRTH": None},  # valeurs nulles
+])
+def test_invalid_data(invalid_row):
+    response = client.post("/predict", json=invalid_row)
+    # L'API doit renvoyer une erreur 400 ou 422
+    assert response.status_code in [400, 422]
 
-        proba = json_resp["probability"]
-        pred = json_resp["prediction"]
+# --------------------------
+# 4️⃣ Tests performance
+# --------------------------
+@pytest.mark.smoke
+def test_prediction_performance():
+    test_data = load_test_data(OUTPUT_DIR / "donnees_test_true.json")
+    for row in test_data[:5]:
+        start = time.time()
+        response = client.post("/predict", json=row)
+        end = time.time()
+        assert response.status_code == 200
+        assert (end - start) < 0.5  # réponse rapide pour CI
 
-        # Log des valeurs de prédiction
-        logger = logging.getLogger(__name__)
-        # Cette ligne s'affichera automatiquement dans GitHub Actions
-        logger.info(f"Vérification false : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD} | Expected ={expected}")
-        #
-        print(f"Vérification false : Proba={proba:.4f} | Pred={pred} | Seuil={BEST_THRESHOLD} | Expected ={expected}")
-        
-        # Vérifie types
-        assert isinstance(proba, float)
-        assert isinstance(pred, int)
+# --------------------------
+# 5️⃣ Tests limites / valeurs extrêmes
+# --------------------------
+@pytest.mark.long
+@pytest.mark.parametrize("extreme_row", [
+    {"AMT_CREDIT": 1e9, "AMT_INCOME_TOTAL": 1e8, "DAYS_BIRTH": -20000},
+    {"AMT_CREDIT": 0, "AMT_INCOME_TOTAL": 0, "DAYS_BIRTH": -1},
+])
+def test_extreme_values(extreme_row):
+    response = client.post("/predict", json=extreme_row)
+    assert response.status_code == 200
+    check_prediction(extreme_row, response.json())
 
-        # Cohérence seuil
-        if proba < BEST_THRESHOLD:
-            assert pred == 0
-        else:
-            assert pred == 1
+# --------------------------
+# 6️⃣ Tests golden set – non-régression
+# --------------------------
+@pytest.mark.long
+def test_golden_set():
+    golden_data = load_test_data(OUTPUT_DIR / "donnees_test_true.json")
+    for row in golden_data:
+        row_copy = row.copy()
+        expected = row_copy.pop("TARGET", None)
+        response = client.post("/predict", json=row_copy)
+        check_prediction(row, response.json(), expected)
