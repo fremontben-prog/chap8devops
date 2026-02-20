@@ -63,7 +63,7 @@ def check_prediction(row, json_resp, expected=None):
 @pytest.mark.parametrize("filename", ["donnees_test_true.json", "donnees_test_false.json"])
 def test_smoke_prediction(filename):
     """Test rapide pour CI, vérifie structure et cohérence sur un petit échantillon"""
-    test_data = load_test_data(OUTPUT_DIR / filename)
+    test_data = load_test_data(filename)
     for row in test_data:  
         row_copy = row.copy()
         expected = row_copy.pop("TARGET", None)
