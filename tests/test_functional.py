@@ -122,8 +122,13 @@ def test_prediction_performance():
 ])
 def test_extreme_values(extreme_row):
     response = client.post("/predict", json=extreme_row)
-    assert response.status_code == 200
-    check_prediction(extreme_row, response.json())
+    # Si le crédit est 0, on s'attend à une erreur 422
+    if extreme_row["AMT_CREDIT"] == 0:
+        assert response.status_code == 422
+        assert "detail" in response.json()
+    else:
+        assert response.status_code == 200
+        check_prediction(extreme_row, response.json())
 
 # --------------------------
 # 6️⃣ Tests golden set – non-régression
