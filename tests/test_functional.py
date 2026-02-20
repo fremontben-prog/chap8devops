@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 # --------------------------
 def load_test_data(filename):
     file_path = PROJECT_ROOT / "outputs" / filename
-    file_path = os.path.join(os.path.dirname(__file__), filename)
     with open(file_path, "r") as f:
         return json.load(f)
     
