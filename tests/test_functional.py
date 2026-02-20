@@ -16,8 +16,8 @@ client = TestClient(app)
 # Récupération du seuil
 _, BEST_THRESHOLD = get_model_and_threshold()
 
-# CHemin des fichiers JSON
-OUTPUT_DIR = Path("outputs")
+# Chemin des fichiers racine projet
+PROJECT_ROOT = Path(__file__).parent.parent
 
 logger = logging.getLogger(__name__)    
 
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 # Fonctions utilitaires
 # --------------------------
 def load_test_data(filename):
+    file_path = PROJECT_ROOT / "outputs" / filename
     file_path = os.path.join(os.path.dirname(__file__), filename)
     with open(file_path, "r") as f:
         return json.load(f)
