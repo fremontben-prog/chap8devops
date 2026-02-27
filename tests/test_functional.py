@@ -56,7 +56,7 @@ def check_prediction(row, json_resp, expected=None):
 ###########################################################
 
 # --------------------------
-# 1️⃣ Tests rapides (smoke) – pour CI rapide
+# Tests rapides (smoke) – pour CI rapide
 # --------------------------
 @pytest.mark.smoke
 @pytest.mark.parametrize("filename", ["donnees_test_true.json", "donnees_test_false.json"])
@@ -71,7 +71,7 @@ def test_smoke_prediction(filename):
         check_prediction(row, response.json(), expected)
 
 # --------------------------
-# 2️⃣ Tests longs / robustesse – moins fréquents
+# Tests longs / robustesse – moins fréquents
 # --------------------------
 @pytest.mark.long
 @pytest.mark.parametrize("filename", ["donnees_test_full_true.json", "donnees_test_full_false.json"])
@@ -86,7 +86,7 @@ def test_full_prediction(filename):
         check_prediction(row, response.json(), expected)
 
 # --------------------------
-# 3️⃣ Tests de validité / erreurs
+# Tests de validité / erreurs
 # --------------------------
 @pytest.mark.smoke
 @pytest.mark.parametrize("invalid_row", [
@@ -100,7 +100,7 @@ def test_invalid_data(invalid_row):
     assert response.status_code in [400, 422]
 
 # --------------------------
-# 4️⃣ Tests performance
+# Tests performance
 # --------------------------
 @pytest.mark.smoke
 def test_prediction_performance():
@@ -113,7 +113,7 @@ def test_prediction_performance():
         assert (end - start) < 0.5  # réponse rapide pour CI
 
 # --------------------------
-# 5️⃣ Tests limites / valeurs extrêmes
+# Tests limites / valeurs extrêmes
 # --------------------------
 @pytest.mark.long
 @pytest.mark.parametrize("extreme_row", [
@@ -131,7 +131,7 @@ def test_extreme_values(extreme_row):
         check_prediction(extreme_row, response.json())
 
 # --------------------------
-# 6️⃣ Tests golden set – non-régression
+# Tests golden set – non-régression
 # --------------------------
 @pytest.mark.long
 def test_golden_set():

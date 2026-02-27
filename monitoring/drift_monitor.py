@@ -11,8 +11,8 @@ from elasticsearch import Elasticsearch
 
 
 # --- CONFIGURATION ---
-INDEX_PROD = "api-logs"
-INDEX_METRICS = "drift-metrics"
+INDEX_PROD = os.getenv("INDEX_PROD", "predictions")
+INDEX_METRICS = os.getenv("INDEX_METRICS", "drift")
 
 # --- ElasticSarch avec
 ES_HOST = os.getenv("ES_HOST", "localhost")
@@ -64,9 +64,42 @@ def run_global_monitoring():
         "query": {"range": {"timestamp": {"gte": "now-1d/d", "lt": "now/d"}}}
     } """
     
-    # 1. Tester la connexion et la récupération
+    # 1. Récupération des dernières valeurs dans Elasticsearch
     try:
-        query = {"size": 2000, "query": {"match_all": {}}}
+        query = {
+            "size": 2000,
+            "sort": [
+                {
+                    "@timestamp": {
+                        "order": "desc"
+                    }
+                }
+            ],
+            "_source": [
+                "@timestamp",
+                "request_body",
+                "path",
+                "method"
+            ],
+            "query": {
+                "bool": {
+                    "must": [
+                        {"term": {"path.keyword": "/predict"}},
+                        {"term": {"method.keyword": "POST"}}
+                    ],
+                    "filter": [
+                        {
+                            "range": {
+                                "@timestamp": {
+                                    "gte": "now-1d",
+                                    "lte": "now"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
         response = es.search(index=INDEX_PROD, body=query)
         hits = response["hits"]["hits"]
         print(f"[STEP 1] Docs trouvés dans {INDEX_PROD}: {len(hits)}")
@@ -80,28 +113,45 @@ def run_global_monitoring():
         return
 
     # Conversion des logs en DataFrame pour faciliter la manipulation
-    df_prod = pd.DataFrame([hit["_source"]["input_features"] for hit in hits])
+    # En ne prennant que api-logs ayant request_body
+    df_prod = pd.DataFrame([
+        hit["_source"]["request_body"]
+        for hit in hits
+        if hit["_source"].get("request_body") is not None
+    ])
+    
+    if df_prod.nunique().mean() < 2:
+        print("⚠️ Données quasi constantes → monitoring ignoré")
+        return
 
     for feature_name in (features + boolean_features):
-        # Charger le fichier de référence JSON
+
+        if feature_name not in df_prod.columns:
+            continue
+
         try:
             with open(f"reference_distributions/{feature_name}.json", "r") as f:
                 ref_data = json.load(f)
-                
         except FileNotFoundError:
             continue
 
         current_values = df_prod[feature_name].dropna()
+
+        if feature_name in boolean_features:
+            current_values = current_values.astype(float)
+
         print(f"[CURRENT] {feature_name} size:", len(current_values))
-        
+
         if len(current_values) < 30:
             continue
         
+
         # --- CAS NUMÉRIQUE (Test K-S) ---
         if ref_data["type"] == "numeric":
             ref_values = np.array(ref_data["values"])
+              
             stat, p_value = ks_2samp(ref_values, current_values)
-            drift_detected = p_value < 0.05
+            drift_detected = (p_value < 0.05) and (stat > 0.1)
             metric_val = p_value
             metric_name = "p_value_ks"
 
@@ -110,7 +160,7 @@ def run_global_monitoring():
             # On compare le % de "1" (True)
             ref_rate = ref_data["distribution"].get("1.0", ref_data["distribution"].get("1", 0))
             prod_rate = current_values.mean() # Moyenne d'une colonne 0/1 = taux de 1
-            
+
             # Pour les booléens, on utilise souvent une différence absolue (ex: > 10%)
             diff = abs(ref_rate - prod_rate)
             drift_detected = diff > 0.10 
@@ -118,8 +168,7 @@ def run_global_monitoring():
             metric_name = "abs_diff_rate"
 
         # 2. Envoyer le score vers Elasticsearch
-        print("Indexing drift metric for:", feature_name)
-        es.index(index=INDEX_METRICS, document={
+        log_data = {
             "@timestamp": datetime.now().isoformat(),
             "feature": feature_name,
             "type": ref_data["type"],
@@ -127,14 +176,12 @@ def run_global_monitoring():
             "statistic": float(stat),
             "value": float(metric_val),
             "status": "CRITICAL" if drift_detected else "OK"
-        })
-
+        }
+        print(f"LOG_DATA : {INDEX_METRICS}    {log_data}")
+        es.index(index=INDEX_METRICS, document=log_data)
+        
     print(f"Monitoring terminé à {datetime.now()}")
-    es.index(
-        index=INDEX_METRICS,
-        document={"test": "hello"}
-    )
-    print(f"Test document inserted with {INDEX_METRICS}")
+    
     
 if __name__ == "__main__":
     run_global_monitoring()

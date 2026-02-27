@@ -11,5 +11,5 @@ dependencies:
   - numpy
   - matplotlib
   - seaborn
-  - mlflow
+
 

@@ -23,17 +23,33 @@ services:
       - elasticsearch
 
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.api
     container_name: api
     ports:
       - "8000:8000"
     environment:
       - ES_HOST=elasticsearch
+      - INDEX_PROD=api-logs
+      - INDEX_METRICS=drift-metrics
+      - MLFLOW_TRACKING_URI=http://host.docker.internal:5001
     volumes:
       - ./reference_distributions:/app/reference_distributions
     depends_on:
       - elasticsearch
 
+  gradio:
+    build:
+      context: .
+      dockerfile: Dockerfile.gradio
+    container_name: gradio
+    ports:
+      - "7860:7860"
+    environment:
+      - API_URL=http://api:8000/predict
+    depends_on:
+      - api
 
 volumes:
   esdata:

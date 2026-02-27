@@ -8,3 +8,7 @@ xgboost>=2.0.0
 pydantic
 elasticsearch==8.12.0
 pytest
+psutil
+numpy
+requests
+onnxruntime

@@ -10,6 +10,7 @@ import pandas as pd
 import joblib
 import json
 import shap
+import numpy as np
 
 from datetime import datetime
 from pathlib import Path
@@ -39,13 +40,16 @@ from src.model import (
 )
 
 from src.util import (
-    get_best_run,
     get_best_model_info
 )
 
 from monitoring.drift_monitor import INDEX_PROD
 
 from elasticsearch import Elasticsearch
+
+
+import onnxmltools
+from onnxmltools.convert.common.data_types import FloatTensorType
 
 
 SUBMISSION_FILE_NAME = "submission_kernel02.csv"
@@ -293,7 +297,7 @@ def main(debug = True):
     scale_pos_weight = (y == 0).sum() / (y == 1).sum()
     
     if model_type == "xgboost":
-        # Suppression de paramètres provenant de MLFlow et non nécessaires
+        # Suppression de paramètres provenant de MLFlow et non nécessaires pour XGBOOST
         XGB_FORBIDDEN_PARAMS = {"best_threshold", "use_label_encoder"}
         params = {
             k: v for k, v in cast_params(best_params).items()
@@ -391,6 +395,21 @@ def main(debug = True):
             model_uri=model_uri,
             name="CreditDefaultModel"
         )
+    
+    # ==========================
+    # Optimisation du model XGBOOST en le convertissant en model onnx
+    # ==========================    
+    #if model_type == "xgboost":
+    #    initial_type = [
+    #        ("float_input", FloatTensorType([None, final_model.n_features_in_]))
+    #    ]
+
+    #    onnx_model = onnxmltools.convert_xgboost(final_model, initial_types=initial_type)
+
+    #    onnx_path = OUTPUT_DIR / "final_model.onnx"
+    #    with open(onnx_path, "wb") as f:
+    #        f.write(onnx_model.SerializeToString())
+    #    print(f"Modèle exporté en ONNX dans {onnx_path}")
 
     
     # ==========================
@@ -494,10 +513,6 @@ def main(debug = True):
     print("Références sauvegardées avec succès.")
     
 
-"""     fi_path = OUTPUT_DIR / f"{model_type}_feature_importance.csv"
-    print(f"Feature importance : {fi_path}")
-    results["feature_importance"].to_csv(fi_path, index=False)
-    mlflow.log_artifact(str(fi_path)) """
 
 if __name__ == "__main__":
     # MLFlow en local

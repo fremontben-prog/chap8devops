@@ -12,14 +12,14 @@ OUTPUT_DIR = Path("outputs")
 LOCAL_MODEL_FILE = OUTPUT_DIR / "final_model.pkl"
 LOCAL_THRESHOLD_FILE = OUTPUT_DIR / "best_threshold.json"
 
+
 model = None
 BEST_THRESHOLD = None
 
 
 def get_model_and_threshold():
-    """
-    Lazy loading : charge le modèle une seule fois.
-    """
+    # Lazy loading : charge le modèle une seule fois.
+    
     global model, BEST_THRESHOLD
 
     if model is None:
@@ -30,13 +30,13 @@ def get_model_and_threshold():
 
 def load_model_and_threshold():
     env = os.getenv("ENV", "prod")
-    print(f"🔎 ENV value: {env}")
+    print(f"ENV value: {env}")
 
     # ==========================
     # MODE TEST (CI / local dev)
     # ==========================
     if env == "test":
-        print("🧪 MODE TEST")
+        print("MODE TEST")
 
         if not LOCAL_MODEL_FILE.exists():
             raise FileNotFoundError(
@@ -48,7 +48,7 @@ def load_model_and_threshold():
                 f"Threshold file not found: {LOCAL_THRESHOLD_FILE}"
             )
 
-        print(f"📦 Loading model from {LOCAL_MODEL_FILE}")
+        print(f"Loading model from {LOCAL_MODEL_FILE}")
         model = joblib.load(LOCAL_MODEL_FILE)
 
         with open(LOCAL_THRESHOLD_FILE, "r") as f:
@@ -56,14 +56,14 @@ def load_model_and_threshold():
 
         best_threshold = float(threshold_data["best_threshold"])
 
-        print(f"✅ Loaded threshold: {best_threshold}")
+        print(f"Loaded threshold: {best_threshold}")
 
         return model, best_threshold
 
     # ==========================
     # MODE PROD (MLflow)
     # ==========================
-    print("🚀 MODE PROD (MLflow)")
+    print("MODE PROD (MLflow)")
 
     mlflow.set_tracking_uri(
         os.getenv("MLFLOW_TRACKING_URI", "http://host.docker.internal:5001")
@@ -79,6 +79,6 @@ def load_model_and_threshold():
 
     best_threshold = float(run.data.params.get("best_threshold", 0.5))
 
-    print(f"✅ Loaded MLflow threshold: {best_threshold}")
+    print(f"Loaded MLflow threshold: {best_threshold}")
 
     return model, best_threshold
