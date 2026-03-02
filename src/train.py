@@ -97,18 +97,18 @@ FEATURES = [
 
 # Variables booléennes (one-hot) pour le drift
 BOOLEAN_FEATURES = [
-"NAME_EDUCATION_TYPE_Higher education",
-"WEEKDAY_APPR_PROCESS_START_TUESDAY",
-"OCCUPATION_TYPE_Laborers",
-"NAME_HOUSING_TYPE_House / apartment",
-"ORGANIZATION_TYPE_Self-employed",
-"WEEKDAY_APPR_PROCESS_START_FRIDAY",
-"NAME_EDUCATION_TYPE_Secondary / secondary special",
-"NAME_INCOME_TYPE_Commercial associate",
-"NAME_FAMILY_STATUS_Married",
-"ORGANIZATION_TYPE_Other",
-"WALLSMATERIAL_MODE_Panel",
-"NAME_CONTRACT_TYPE_Cash loans"
+    "NAME_EDUCATION_TYPE_Higher_education",          # espace → _
+    "WEEKDAY_APPR_PROCESS_START_TUESDAY",            # OK
+    "OCCUPATION_TYPE_Laborers",                      # OK
+    "NAME_HOUSING_TYPE_House___apartment",           # "/ " → "___"
+    "ORGANIZATION_TYPE_Self_employed",               # "-" → "_"
+    "WEEKDAY_APPR_PROCESS_START_FRIDAY",             # OK
+    "NAME_EDUCATION_TYPE_Secondary___secondary_special",  # "/ " → "___", espace → _
+    "NAME_INCOME_TYPE_Commercial_associate",         # espace → _
+    "NAME_FAMILY_STATUS_Married",                    # OK
+    "ORGANIZATION_TYPE_Other",                       # OK
+    "WALLSMATERIAL_MODE_Panel",                      # OK
+    "NAME_CONTRACT_TYPE_Cash_loans"                  # espace → _
 ]
 
 index_prod = INDEX_PROD
@@ -503,8 +503,27 @@ def main(debug = True):
         with open(REF_DIR / f"{feature_name}.json", "w") as f:
             json.dump(ref, f)
 
+
+    missing_features = [f for f in BOOLEAN_FEATURES if f not in X.columns]
+    if missing_features:
+        print(f"⚠️ Features manquantes dans X : {missing_features}")
+        print("Colonnes disponibles similaires :")
+        for f in missing_features:
+            keyword = f.split('_')[-1]
+            similar = [c for c in X.columns if keyword.lower() in c.lower()]
+            print(f"  {f} → {similar}")
+            
+    for f in missing_features:
+        # Cherche par le préfixe (ex: "NAME_EDUCATION_TYPE")
+        prefix = '_'.join(f.split('_')[:3])
+        similar = [c for c in X.columns if prefix in c]
+        print(f"{f}")
+        print(f"  prefix '{prefix}' → {similar[:5]}")
+        print()
+        
+        
     # Application
-    for feature in FEATURES:
+    for feature in FEATURES+BOOLEAN_FEATURES:
         if feature in BOOLEAN_FEATURES:
             save_boolean_reference(X[feature], feature)
         else:

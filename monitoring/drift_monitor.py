@@ -42,7 +42,7 @@ features = [
 "LIVE_CITY_NOT_WORK_CITY","BASEMENTAREA_AVG"
 ]
 
-boolean_features = [
+""" boolean_features = [
 "NAME_EDUCATION_TYPE_Higher education",
 "WEEKDAY_APPR_PROCESS_START_TUESDAY",
 "OCCUPATION_TYPE_Laborers",
@@ -55,6 +55,22 @@ boolean_features = [
 "ORGANIZATION_TYPE_Other",
 "WALLSMATERIAL_MODE_Panel",
 "NAME_CONTRACT_TYPE_Cash loans"
+] """
+
+# Variables booléennes (one-hot) pour le drift
+boolean_features = [
+    "NAME_EDUCATION_TYPE_Higher_education",          # espace → _
+    "WEEKDAY_APPR_PROCESS_START_TUESDAY",            # OK
+    "OCCUPATION_TYPE_Laborers",                      # OK
+    "NAME_HOUSING_TYPE_House___apartment",           # "/ " → "___"
+    "ORGANIZATION_TYPE_Self_employed",               # "-" → "_"
+    "WEEKDAY_APPR_PROCESS_START_FRIDAY",             # OK
+    "NAME_EDUCATION_TYPE_Secondary___secondary_special",  # "/ " → "___", espace → _
+    "NAME_INCOME_TYPE_Commercial_associate",         # espace → _
+    "NAME_FAMILY_STATUS_Married",                    # OK
+    "ORGANIZATION_TYPE_Other",                       # OK
+    "WALLSMATERIAL_MODE_Panel",                      # OK
+    "NAME_CONTRACT_TYPE_Cash_loans"                  # espace → _
 ]
 
 def run_global_monitoring():
@@ -121,8 +137,11 @@ def run_global_monitoring():
     ])
     
     if df_prod.nunique().mean() < 2:
-        print("⚠️ Données quasi constantes → monitoring ignoré")
+        print("Données quasi constantes → monitoring ignoré")
         return
+    
+    moy = df_prod.nunique().mean()
+    print(f"Moyenne : {moy}")
 
     for feature_name in (features + boolean_features):
 
@@ -151,29 +170,35 @@ def run_global_monitoring():
             ref_values = np.array(ref_data["values"])
               
             stat, p_value = ks_2samp(ref_values, current_values)
-            drift_detected = (p_value < 0.05) and (stat > 0.1)
+            drift_detected = (p_value < 0.05) and (stat > 0.2) # test avec stat > 0.1 tout est en critical
             metric_val = p_value
             metric_name = "p_value_ks"
 
         # --- CAS BOOLÉEN (Comparaison de proportion) ---
         else:
-            # On compare le % de "1" (True)
-            ref_rate = ref_data["distribution"].get("1.0", ref_data["distribution"].get("1", 0))
-            prod_rate = current_values.mean() # Moyenne d'une colonne 0/1 = taux de 1
+            # Compare le % de "1" (True)
+            ref_rate = ref_data["distribution"].get("True", 0.0)
+            # ref_rate = ref_data["distribution"].get("1.0", ref_data["distribution"].get("1", 0))
+            prod_rate = current_values.mean() 
 
-            # Pour les booléens, on utilise souvent une différence absolue (ex: > 10%)
+            # Pour les booléens, différence absolue (> 10%)
             diff = abs(ref_rate - prod_rate)
             drift_detected = diff > 0.10 
             metric_val = diff
             metric_name = "abs_diff_rate"
 
+        
         # 2. Envoyer le score vers Elasticsearch
+        if ref_data["type"] == "numeric":
+            stat_value = stat
+        else:
+            stat_value = diff
         log_data = {
             "@timestamp": datetime.now().isoformat(),
             "feature": feature_name,
             "type": ref_data["type"],
             "metric_name": metric_name,
-            "statistic": float(stat),
+            "statistic": float(stat_value),
             "value": float(metric_val),
             "status": "CRITICAL" if drift_detected else "OK"
         }
